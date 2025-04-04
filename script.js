@@ -7,8 +7,12 @@ searching.addEventListener("input", async () => {
         const query = searching.value.trim();
         if (query.length === 0) {
             suggestions.innerHTML = '';
+            currentSkins = [];
             return;
         }
+
+        
+        suggestions.innerHTML = `<li>Loading...</li>`;
 
         let response = await fetch("https://valorant-api.com/v1/weapons/skinchromas");
 
@@ -22,8 +26,9 @@ searching.addEventListener("input", async () => {
             item.displayName && item.displayName.toLowerCase().includes(query.toLowerCase())
         );
 
-        if (skin.length == 0) {
-            suggestions.innerHTML = `<li>No Skin Found!!!</li>`;
+        if (skin.length === 0) {
+            suggestions.innerHTML = `<li class="no-click">No Skin Found!!!</li>`;
+            currentSkins = [];
         } else {
             suggestions.innerHTML = skin.slice(0, 15).map((item, index) =>
                 `<li data-index="${index}">${item.displayName}</li>`
@@ -36,9 +41,21 @@ searching.addEventListener("input", async () => {
     }
 });
 
+
+searching.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault(); 
+        if (currentSkins.length > 0) {
+            const firstSkin = currentSkins[0];
+            finder(firstSkin.displayName, firstSkin);
+        }
+    }
+});
+
+
 suggestions.addEventListener("click", (event) => {
     const li = event.target.closest("li");
-    if (!li) return;
+    if (!li || li.classList.contains("no-click")) return;
 
     const index = li.getAttribute("data-index");
     const selectedSkin = currentSkins[index];
@@ -52,12 +69,13 @@ function finder(name, data) {
     suggestions.innerHTML = '';
     console.log(name);
     console.log(data);
+
     const imgele = document.getElementById("skinimg");
     const videle = document.getElementById("vid");
 
     document.getElementById("dispname").innerHTML = name;
-    const img = data.fullRender || "default-image.png";
 
+    const img = data.fullRender || "https://via.placeholder.com/300x150?text=No+Image";
     imgele.src = img;
     imgele.style.display = "block";
 
@@ -65,10 +83,9 @@ function finder(name, data) {
     if (vid) {
         videle.setAttribute("src", vid);
         videle.style.display = "block";
-        document.getElementById("msg").innerHTML = 'You can even download this video';
-    } 
-    else {
-        document.getElementById("msg").innerHTML = "Does not have a video";
+        document.getElementById("msg").innerHTML = "You can even DOWNLOAD this video";
+    } else {
+        document.getElementById("msg").innerHTML = "This skin DOSE NOT have a video";
         videle.removeAttribute("src");
         videle.style.display = "none";
     }
